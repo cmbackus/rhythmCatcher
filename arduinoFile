@@ -1,0 +1,92 @@
+// constants won’t change. They’re used here to 
+// set pin numbers:
+const int rythmPin = 2; // the number of the pushbutton pin
+const int ledPin = 4; // the number of the LED pin
+const int recordPin=11;
+// variables will change:
+int rythmState = 0; // variable for reading the pushbutton status
+int recordState = 0; 
+int prevState=0;
+//recording arrays
+int rythPos=0;
+int myState[50]={0};
+unsigned long myRythm[50];
+//recording timers
+unsigned long pressStart;
+unsigned long releaseTime;
+void setup() {
+// initialize the LED pin as an output:
+pinMode(ledPin, OUTPUT); 
+// initialize the pushbutton pin as an input:
+pinMode(rythmPin, INPUT); 
+pinMode(recordPin, INPUT); 
+delay(10);
+}
+void loop(){
+// read the state of the pushbutton value:
+// int prevState[6];
+Serial.println(“in loop”);
+int rythmState = digitalRead(rythmPin);
+int recordState=digitalRead(recordPin);
+//check if record button is on
+if(recordState==HIGH){
+//check if rythmbutton is on
+if (rythmState == HIGH &&prevState==LOW) { 
+// turn LED on: 
+pressStart = millis();
+unsigned long offTime =pressStart-releaseTime;
+//record state and time in arrays
+myRythm[rythPos]=offTime;
+myState[rythPos]=LOW;
+rythPos++;
+//Serial.println(offTime/1000);
+//Serial.println(“offTime”);
+// Serial.print(“pressStart”);
+//Serial.println( pressStart/1000);
+//Serial.print(“releaseTime”);
+//Serial.println(releaseTime/1000);
+//change state
+digitalWrite(ledPin, HIGH);
+prevState=HIGH;
+}
+if (rythmState==LOW && prevState==HIGH){
+// turn LED off:
+//record down time 
+releaseTime = millis();
+unsigned long onTime = releaseTime - pressStart;
+myRythm[rythPos]=onTime;
+myState[rythPos]=HIGH;
+rythPos++;
+// Serial.println(onTime/1000);
+// Serial.println(“onTime”);
+// Serial.print(“pressStart”);
+//Serial.println( pressStart/1000);
+//Serial.print(“releaseTime”);
+//Serial.println(releaseTime/1000);
+//change state
+digitalWrite(ledPin, LOW);
+prevState=LOW;
+}
+if(rythPos>=50){
+rythPos=0;
+}
+}
+//if record button isn’t pushed, playback rythm
+else{
+ delay(500);
+ int i;
+ Serial.println(rythPos);
+  // Serial.println(millis());
+ for (i = 1; i < rythPos; i++) {
+ unsigned long push=myRythm[i];
+ int state=myState[i];
+ digitalWrite(ledPin, state);
+ delay(push);
+ //Serial.println(push/1000);
+ //Serial.println(state);
+}
+rythPos=0;
+digitalWrite(ledPin, LOW);
+prevState=LOW;
+}
+}
